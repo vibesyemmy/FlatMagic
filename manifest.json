@@ -1,0 +1,12 @@
+{
+  "name": "FlatMagic",
+  "id": "1448869823988608422",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}
