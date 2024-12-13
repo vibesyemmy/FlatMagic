@@ -255,28 +255,12 @@ figma.ui.onmessage = async (msg) => {
     for (const node of selection) {
       if (node.type === "FRAME" || node.type === "GROUP") {
         try {
-          // Get the bounds of all children
-          const bounds = {
-            left: Number.POSITIVE_INFINITY,
-            top: Number.POSITIVE_INFINITY,
-            right: Number.NEGATIVE_INFINITY,
-            bottom: Number.NEGATIVE_INFINITY
-          };
-
-          // Calculate total bounds
-          for (const child of node.children) {
-            const childBounds = child.absoluteBoundingBox;
-            bounds.left = Math.min(bounds.left, childBounds.x);
-            bounds.top = Math.min(bounds.top, childBounds.y);
-            bounds.right = Math.max(bounds.right, childBounds.x + childBounds.width);
-            bounds.bottom = Math.max(bounds.bottom, childBounds.y + childBounds.height);
-          }
-
-          // Create export settings based on size
-          const width = bounds.right - bounds.left;
-          const height = bounds.bottom - bounds.top;
-          let scale = 4;
+          // Use the node's own dimensions and position
+          const width = node.width;
+          const height = node.height;
           
+          // Determine scale based on size
+          let scale = 4;
           if (width > 1500 || height > 1500) {
             scale = 1;
           } else if (width > 1000 || height > 1000) {
@@ -293,8 +277,13 @@ figma.ui.onmessage = async (msg) => {
           const rect = figma.createRectangle();
           const image = figma.createImage(bytes);
           
+          // Set exact dimensions from original
           rect.resize(width, height);
-          rect.fills = [{ type: "IMAGE", imageHash: image.hash, scaleMode: "FILL" }];
+          rect.fills = [{ 
+            type: "IMAGE", 
+            imageHash: image.hash, 
+            scaleMode: "FILL" 
+          }];
           rect.name = node.name + " (Flattened)";
 
           // Position the new rectangle
