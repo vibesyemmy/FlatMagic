@@ -1,74 +1,325 @@
-figma.showUI(__html__);
+figma.showUI(`
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    width: 320px;
+    height: 320px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #1E1E1E;
+    color: #fff;
+    overflow: hidden;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-figma.ui.resize(320, 256);
+  * {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
 
-// Function to check selection and update UI
-function updateUIState() {
-  const selection = figma.currentPage.selection;
-  const hasValidSelection = selection.length > 0 && 
-    selection.some(node => node.type === 'FRAME' || node.type === 'GROUP');
+  .Content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    background: #1E1E1E;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    align-self: flex-start;
+    padding-top: 32px;
+    margin-bottom: 16px;
+  }
+
+  .info-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    align-self: flex-start;
+    font-weight: 400;
+    font-size: 12px;
+  }
+
+  .info-icon {
+    min-width: 20px;
+    min-height: 20px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .info-icon svg {
+    min-width: 20px;
+    min-height: 20px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+  }
+
+  .container {
+    background: rgba(98, 98, 98, 0.2);
+    padding: 24px 16px;
+    border-radius: 8px;
+    width: calc(100% - 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    align-self: stretch;
+    border: 1px solid #3E3E3E;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .checkbox-wrapper input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .checkbox-wrapper label {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  input[type="checkbox"] {
+    border-radius: 4px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"]:checked {
+    background: #18A0FB;
+    border-color: #18A0FB;
+    position: relative;
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  button {
+    width: 100%;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #18A0FB 0%, #0D8EE0 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    opacity: 0.9;
+  }
+
+  button:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  .footer {
+    margin-top: auto;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding-bottom: 8px;
+  }
+
+  .footer a {
+    color: #18A0FB;
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    color: #0D8EE0;
+    text-decoration: underline;
+  }
+</style>
+
+<div class="Content">
+  <h1>FlatMagic</h1>
   
-  figma.ui.postMessage({ 
-    type: 'selection-change',
+  <div class="info-section">
+    <div class="info-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V9H11V15ZM11 7H9V5H11V7Z" fill="white"/>
+      </svg>
+    </div>
+    <span>Select a frame or group to flatten.</span>
+  </div>
+
+  <div class="container">
+    <div class="checkbox-wrapper">
+      <input type="checkbox" id="retain" checked />
+      <label for="retain">Retain original frame</label>
+    </div>
+    <button id="flattenBtn">Flatten Selection</button>
+  </div>
+
+  <div class="footer">
+    Made with ❤️ by <a href="https://opeyemi.design" target="_blank">Opeyemi Ajagbe</a>
+  </div>
+</div>
+
+<script>
+window.onmessage = async (event) => {
+  const msg = event.data.pluginMessage;
+  if (msg.type === 'selectionChange') {
+    const button = document.getElementById('flattenBtn');
+    button.disabled = !msg.hasValidSelection;
+  }
+};
+
+document.getElementById('flattenBtn').onclick = () => {
+  const retainOriginal = document.getElementById('retain').checked;
+  parent.postMessage({ pluginMessage: { type: 'flatten', retainOriginal } }, '*');
+};
+</script>
+`, {
+  width: 320,
+  height: 320
+});
+
+// Handle selection changes
+figma.on('selectionchange', () => {
+  const selection = figma.currentPage.selection;
+  const hasValidSelection = selection.length > 0 && (
+    selection[0].type === "FRAME" || 
+    selection[0].type === "GROUP"
+  );
+  
+  figma.ui.postMessage({
+    type: 'selectionChange',
     hasValidSelection
   });
-}
+});
 
-// Listen for selection changes
-figma.on('selectionchange', updateUIState);
+// Initial selection check
+const selection = figma.currentPage.selection;
+const hasValidSelection = selection.length > 0 && (
+  selection[0].type === "FRAME" || 
+  selection[0].type === "GROUP"
+);
 
-// Initial UI state update
-updateUIState();
+figma.ui.postMessage({
+  type: 'selectionChange',
+  hasValidSelection
+});
 
 figma.ui.onmessage = async (msg) => {
-  if (msg.type === 'flatten-selection') {
+  if (msg.type === 'flatten') {
     const selection = figma.currentPage.selection;
-
+    
     if (selection.length === 0) {
       figma.notify('Please select a frame or group to flatten');
       return;
     }
 
     for (const node of selection) {
-      if (node.type === 'FRAME' || node.type === 'GROUP') {
+      if (node.type === "FRAME" || node.type === "GROUP") {
         try {
-          // Create a new frame with the same dimensions and position
-          const newFrame = figma.createFrame();
-          newFrame.x = node.x;
-          newFrame.y = node.y;
-          newFrame.resize(node.width, node.height);
+          // Get the bounds of all children
+          const bounds = {
+            left: Number.POSITIVE_INFINITY,
+            top: Number.POSITIVE_INFINITY,
+            right: Number.NEGATIVE_INFINITY,
+            bottom: Number.NEGATIVE_INFINITY
+          };
+
+          // Calculate total bounds
+          for (const child of node.children) {
+            const childBounds = child.absoluteBoundingBox;
+            bounds.left = Math.min(bounds.left, childBounds.x);
+            bounds.top = Math.min(bounds.top, childBounds.y);
+            bounds.right = Math.max(bounds.right, childBounds.x + childBounds.width);
+            bounds.bottom = Math.max(bounds.bottom, childBounds.y + childBounds.height);
+          }
+
+          // Create export settings based on size
+          const width = bounds.right - bounds.left;
+          const height = bounds.bottom - bounds.top;
+          let scale = 4;
           
-          // Export the selected node as PNG
+          if (width > 1500 || height > 1500) {
+            scale = 1;
+          } else if (width > 1000 || height > 1000) {
+            scale = 2;
+          }
+
+          // Export the frame
           const bytes = await node.exportAsync({
-            format: 'PNG',
-            constraint: { type: 'SCALE', value: 1 }
+            format: "PNG",
+            constraint: { type: "SCALE", value: scale }
           });
 
-          // Create a new image fill
+          // Create a new rectangle with the image
+          const rect = figma.createRectangle();
           const image = figma.createImage(bytes);
           
-          // Apply the image fill to the new frame
-          newFrame.fills = [{
-            type: 'IMAGE',
-            imageHash: image.hash,
-            scaleMode: 'FILL'
-          }];
+          rect.resize(width, height);
+          rect.fills = [{ type: "IMAGE", imageHash: image.hash, scaleMode: "FILL" }];
+          rect.name = node.name + " (Flattened)";
 
-          // Insert the new frame after the original node
-          node.parent.insertChild(node.parent.children.indexOf(node) + 1, newFrame);
-          
-          // Name the new frame
-          newFrame.name = `${node.name} (Flattened)`;
-          
-          // Delete the original node
-          node.remove();
-          
-          figma.notify('Layer flattened successfully!');
+          // Position the new rectangle
+          if (msg.retainOriginal) {
+            // If retaining, place flattened version to the right of original
+            rect.x = node.x + node.width + 100;
+            rect.y = node.y;
+          } else {
+            // If not retaining, place flattened version at original position
+            rect.x = node.x;
+            rect.y = node.y;
+            // Remove the original
+            node.remove();
+          }
+
+          // Add the flattened version to the same parent
+          node.parent.appendChild(rect);
+
+          figma.notify("Flattened successfully! 🎉");
         } catch (error) {
-          figma.notify('Error flattening layer: ' + error.message);
+          console.error("Error flattening:", error);
+          figma.notify("Error flattening: " + error.message);
         }
       } else {
-        figma.notify('Please select a frame or group to flatten');
+        figma.notify("Please select a frame or group");
       }
     }
   }
