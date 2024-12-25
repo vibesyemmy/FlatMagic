@@ -1,315 +1,161 @@
-figma.showUI(`
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-    width: 320px;
-    height: 320px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #1E1E1E;
-    color: #fff;
-    overflow: hidden;
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  * {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-
-  .Content {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding: 0 16px;
-    box-sizing: border-box;
-    background: #1E1E1E;
-  }
-
-  h1 {
-    font-size: 24px;
-    font-weight: 700;
-    margin: 0;
-    align-self: flex-start;
-    padding-top: 32px;
-    margin-bottom: 16px;
-  }
-
-  .info-section {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.8);
-    align-self: flex-start;
-    font-weight: 400;
-    font-size: 12px;
-  }
-
-  .info-icon {
-    min-width: 20px;
-    min-height: 20px;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .info-icon svg {
-    min-width: 20px;
-    min-height: 20px;
-    width: 20px;
-    height: 20px;
-    opacity: 0.8;
-  }
-
-  .container {
-    background: rgba(98, 98, 98, 0.2);
-    padding: 24px 16px;
-    border-radius: 8px;
-    width: calc(100% - 32px);
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    align-self: stretch;
-    border: 1px solid #3E3E3E;
-    outline: none;
-    box-shadow: none;
-  }
-
-  .checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .checkbox-wrapper input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-    margin: 0;
-  }
-
-  .checkbox-wrapper label {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  input[type="checkbox"] {
-    border-radius: 4px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  input[type="checkbox"]:checked {
-    background: #18A0FB;
-    border-color: #18A0FB;
-    position: relative;
-  }
-
-  input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 2px;
-    width: 6px;
-    height: 12px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
-
-  label {
-    font-size: 14px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  button {
-    width: 100%;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #18A0FB 0%, #0D8EE0 100%);
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  button:hover {
-    opacity: 0.9;
-  }
-
-  button:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    cursor: not-allowed;
-    opacity: 1;
-  }
-
-  .footer {
-    margin-top: auto;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    padding-bottom: 8px;
-  }
-
-  .footer a {
-    color: #18A0FB;
-    text-decoration: none;
-  }
-
-  .footer a:hover {
-    color: #0D8EE0;
-    text-decoration: underline;
-  }
-</style>
-
-<div class="Content">
-  <h1>FlatMagic</h1>
-  
-  <div class="info-section">
-    <div class="info-icon">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V9H11V15ZM11 7H9V5H11V7Z" fill="white"/>
-      </svg>
-    </div>
-    <span>Select a frame or group to flatten.</span>
-  </div>
-
-  <div class="container">
-    <div class="checkbox-wrapper">
-      <input type="checkbox" id="retain" checked />
-      <label for="retain">Retain original frame</label>
-    </div>
-    <button id="flattenBtn">Flatten Selection</button>
-  </div>
-
-  <div class="footer">
-    Made with ❤️ by <a href="https://opeyemi.design" target="_blank">Opeyemi Ajagbe</a>
-  </div>
-</div>
-
-<script>
-window.onmessage = async (event) => {
-  const msg = event.data.pluginMessage;
-  if (msg.type === 'selectionChange') {
-    const button = document.getElementById('flattenBtn');
-    button.disabled = !msg.hasValidSelection;
-  }
-};
-
-document.getElementById('flattenBtn').onclick = () => {
-  const retainOriginal = document.getElementById('retain').checked;
-  parent.postMessage({ pluginMessage: { type: 'flatten', retainOriginal } }, '*');
-};
-</script>
-`, {
+// Show UI
+figma.showUI(__html__, {
   width: 320,
-  height: 320
+  height: 400,
+  themeColors: true
 });
 
-// Handle selection changes
-figma.on('selectionchange', () => {
+// Check if current selection is valid and get frame size info
+function checkSelection() {
   const selection = figma.currentPage.selection;
-  const hasValidSelection = selection.length > 0 && (
-    selection[0].type === "FRAME" || 
-    selection[0].type === "GROUP"
-  );
+  const hasValidSelection = selection.length === 1 && (selection[0].type === "FRAME" || selection[0].type === "GROUP");
   
+  let isLargeFrame = false;
+  if (hasValidSelection) {
+    const node = selection[0];
+    isLargeFrame = node.width > 4000 || node.height > 4000;
+  }
+  
+  return {
+    hasValidSelection,
+    isLargeFrame
+  };
+}
+
+// Initial selection check
+figma.ui.postMessage({
+  type: 'selectionchange',
+  ...checkSelection()
+});
+
+// Listen for selection changes
+figma.on('selectionchange', () => {
   figma.ui.postMessage({
-    type: 'selectionChange',
-    hasValidSelection
+    type: 'selectionchange',
+    ...checkSelection()
   });
 });
 
-// Initial selection check
-const selection = figma.currentPage.selection;
-const hasValidSelection = selection.length > 0 && (
-  selection[0].type === "FRAME" || 
-  selection[0].type === "GROUP"
-);
+async function flattenToSVG(node, retainOriginal) {
+  try {
+    // Create a frame to preserve background properties
+    const frame = figma.createFrame();
+    frame.x = retainOriginal ? node.x + node.width + 100 : node.x;
+    frame.y = node.y;
+    frame.resize(node.width, node.height);
+    
+    // Copy background properties if original is a frame
+    if (node.type === "FRAME") {
+      frame.fills = JSON.parse(JSON.stringify(node.fills || []));
+      frame.strokes = JSON.parse(JSON.stringify(node.strokes || []));
+      frame.strokeWeight = node.strokeWeight;
+      frame.strokeAlign = node.strokeAlign;
+      frame.strokeCap = node.strokeCap;
+      frame.strokeJoin = node.strokeJoin;
+      frame.dashPattern = node.dashPattern;
+      frame.cornerRadius = node.cornerRadius;
+    }
 
-figma.ui.postMessage({
-  type: 'selectionChange',
-  hasValidSelection
-});
+    // Add to the same parent as original node
+    if (node.parent) {
+      node.parent.appendChild(frame);
+    }
 
-figma.ui.onmessage = async (msg) => {
+    // Clone the original node's children into the new frame
+    if (node.type === "FRAME") {
+      for (const child of node.children) {
+        const clone = child.clone();
+        frame.appendChild(clone);
+      }
+    } else {
+      const clone = node.clone();
+      frame.appendChild(clone);
+    }
+
+    // Flatten the frame with its contents
+    const flattened = figma.flatten([frame]);
+    flattened.name = node.name + " (Flattened Vector)";
+
+    return flattened;
+  } catch (error) {
+    console.error('Vector flattening failed:', error);
+    figma.notify('Vector flattening failed. Try PNG format instead.');
+    return null;
+  }
+}
+
+figma.ui.onmessage = async msg => {
   if (msg.type === 'flatten') {
     const selection = figma.currentPage.selection;
     
-    if (selection.length === 0) {
-      figma.notify('Please select a frame or group to flatten');
-      return;
-    }
-
-    for (const node of selection) {
-      if (node.type === "FRAME" || node.type === "GROUP") {
-        try {
-          // Use the node's own dimensions and position
-          const width = node.width;
-          const height = node.height;
-          
-          // Determine scale based on size
-          let scale = 4;
-          if (width > 1500 || height > 1500) {
-            scale = 1;
-          } else if (width > 1000 || height > 1000) {
-            scale = 2;
+    if (selection.length > 0) {
+      const node = selection[0];
+      
+      // Check if frame is large (> 4000px in either dimension)
+      const isLargeFrame = node.width > 4000 || node.height > 4000;
+      
+      // Use default quality (2) for large frames, otherwise use selected quality
+      const quality = isLargeFrame ? 2 : msg.quality;
+      
+      if (isLargeFrame) {
+        figma.notify("Large frame detected - using default quality for better performance", { timeout: 2000 });
+      }
+      
+      try {
+        if (msg.format === 'SVG') {
+          const flattenedVector = await flattenToSVG(node, msg.retainOriginal);
+          if (flattenedVector) {
+            if (!msg.retainOriginal) {
+              node.remove();
+            }
+            figma.notify("Successfully flattened to vector");
           }
-
-          // Export the frame
+        } else {
+          // PNG flattening logic
           const bytes = await node.exportAsync({
-            format: "PNG",
-            constraint: { type: "SCALE", value: scale }
+            format: 'PNG',
+            constraint: { type: 'SCALE', value: quality }
           });
 
-          // Create a new rectangle with the image
-          const rect = figma.createRectangle();
           const image = figma.createImage(bytes);
+          const rect = figma.createRectangle();
           
-          // Set exact dimensions from original
-          rect.resize(width, height);
-          rect.fills = [{ 
-            type: "IMAGE", 
-            imageHash: image.hash, 
-            scaleMode: "FILL" 
-          }];
-          rect.name = node.name + " (Flattened)";
-
-          // Position the new rectangle
+          rect.resize(node.width, node.height);
+          
+          // Position the rectangle
           if (msg.retainOriginal) {
-            // If retaining, place flattened version to the right of original
-            rect.x = node.x + node.width + 100;
+            rect.x = node.x + node.width + 100; // 100px to the right
             rect.y = node.y;
           } else {
-            // If not retaining, place flattened version at original position
             rect.x = node.x;
             rect.y = node.y;
-            // Remove the original
+          }
+          
+          rect.fills = [{
+            type: 'IMAGE',
+            imageHash: image.hash,
+            scaleMode: 'FILL'
+          }];
+          rect.name = node.name + " (Flattened)";
+          
+          if (node.parent && node.parent.type !== 'PAGE') {
+            node.parent.appendChild(rect);
+          }
+          
+          if (!msg.retainOriginal) {
             node.remove();
           }
-
-          // Add the flattened version to the same parent
-          node.parent.appendChild(rect);
-
-          figma.notify("Flattened successfully! 🎉");
-        } catch (error) {
-          console.error("Error flattening:", error);
-          figma.notify("Error flattening: " + error.message);
+          
+          figma.notify("Successfully flattened to PNG");
         }
-      } else {
-        figma.notify("Please select a frame or group");
+      } catch (error) {
+        console.error('Flattening failed:', error);
+        figma.notify("Error: Flattening failed");
       }
+    } else {
+      figma.notify("Please select a frame or group");
     }
+    // After flattening is complete
+    figma.ui.postMessage({ type: 'complete' });
   }
 };
