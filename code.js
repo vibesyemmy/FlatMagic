@@ -5,34 +5,23 @@ figma.showUI(__html__, {
   themeColors: true
 });
 
-// Check if current selection is valid and get frame size info
-function checkSelection() {
+// Check if current selection is valid
+function checkValidSelection() {
   const selection = figma.currentPage.selection;
-  const hasValidSelection = selection.length === 1 && (selection[0].type === "FRAME" || selection[0].type === "GROUP");
-  
-  let isLargeFrame = false;
-  if (hasValidSelection) {
-    const node = selection[0];
-    isLargeFrame = node.width > 4000 || node.height > 4000;
-  }
-  
-  return {
-    hasValidSelection,
-    isLargeFrame
-  };
+  return selection.length === 1 && (selection[0].type === "FRAME" || selection[0].type === "GROUP");
 }
 
 // Initial selection check
 figma.ui.postMessage({
   type: 'selectionchange',
-  ...checkSelection()
+  hasValidSelection: checkValidSelection()
 });
 
 // Listen for selection changes
 figma.on('selectionchange', () => {
   figma.ui.postMessage({
     type: 'selectionchange',
-    ...checkSelection()
+    hasValidSelection: checkValidSelection()
   });
 });
 
@@ -91,16 +80,6 @@ figma.ui.onmessage = async msg => {
     if (selection.length > 0) {
       const node = selection[0];
       
-      // Check if frame is large (> 4000px in either dimension)
-      const isLargeFrame = node.width > 4000 || node.height > 4000;
-      
-      // Use default quality (2) for large frames, otherwise use selected quality
-      const quality = isLargeFrame ? 2 : msg.quality;
-      
-      if (isLargeFrame) {
-        figma.notify("Large frame detected - using default quality for better performance", { timeout: 2000 });
-      }
-      
       try {
         if (msg.format === 'SVG') {
           const flattenedVector = await flattenToSVG(node, msg.retainOriginal);
@@ -111,10 +90,10 @@ figma.ui.onmessage = async msg => {
             figma.notify("Successfully flattened to vector");
           }
         } else {
-          // PNG flattening logic
+          // Existing PNG flattening logic
           const bytes = await node.exportAsync({
             format: 'PNG',
-            constraint: { type: 'SCALE', value: quality }
+            constraint: { type: 'SCALE', value: msg.quality }
           });
 
           const image = figma.createImage(bytes);

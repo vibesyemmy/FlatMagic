@@ -280,20 +280,6 @@
         transform: rotate(360deg);
       }
     }
-
-    .warning {
-      display: none;
-      color: #FFB800;
-      font-size: 12px;
-      padding: 8px;
-      border-radius: 8px;
-      background: rgba(255, 184, 0, 0.1);
-      margin-bottom: 16px;
-    }
-
-    .warning.visible {
-      display: block;
-    }
   </style>
 </head>
 <body>
@@ -354,8 +340,6 @@
 
       <hr class="divider">
 
-      <div class="warning" id="warning"></div>
-
       <button id="flattenBtn">Flatten Selection</button>
     </div>
 
@@ -367,24 +351,12 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const flattenBtn = document.getElementById('flattenBtn');
-      const qualitySelect = document.getElementById('quality');
-      const warningEl = document.getElementById('warning');
       
       // Listen for selection changes from the plugin
       window.onmessage = (event) => {
         const msg = event.data.pluginMessage;
         if (msg && msg.type === 'selectionchange') {
           flattenBtn.disabled = !msg.hasValidSelection;
-          
-          if (msg.isLargeFrame) {
-            warningEl.classList.add('visible');
-            warningEl.textContent = 'Large frame detected - quality will be set to default for better performance';
-            qualitySelect.value = '2';
-            qualitySelect.disabled = true;
-          } else {
-            warningEl.classList.remove('visible');
-            qualitySelect.disabled = false;
-          }
         } else if (msg && msg.type === 'complete') {
           // Hide processing overlay
           const processingOverlay = document.getElementById('processingOverlay');
