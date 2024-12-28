@@ -1,5 +1,24 @@
 # FlatMagic Changelog
 
+## Version 1.2.0 (December 29, 2023)
+
+### 🔧 Technical Improvements
+- **Enhanced SVG Handling**
+  - Fixed SVG conversion by replacing TextDecoder with String.fromCharCode
+  - Implemented proper flattening using Figma's native flatten function
+  - Added better error handling for SVG conversion process
+
+### 🎨 UI Improvements
+- **Better User Experience**
+  - Added real-time button state management
+  - Flatten button now disables automatically when no frame is selected
+  - Added visual feedback for selection state
+
+### 🏗 Infrastructure
+- Improved development workflow with comprehensive .gitignore
+- Added proper version management in manifest.json
+- Enhanced code organization and maintainability
+
 ## Version 1.1.0 (December 13, 2023)
 
 ### 🎨 UI Enhancements
