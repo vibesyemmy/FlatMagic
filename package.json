@@ -1,0 +1,14 @@
+{
+  "name": "figma-plugin",
+  "version": "1.2.0",
+  "description": "Figma plugin for flattening vectors",
+  "main": "code.js",
+  "scripts": {
+    "build": "cp code.js dist/code.js && cp ui.html dist/ui.html",
+    "watch": "nodemon --watch code.js --watch ui.html --exec 'npm run build'"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.82.0",
+    "nodemon": "^3.0.2"
+  }
+}
