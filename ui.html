@@ -245,12 +245,12 @@
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
       z-index: 1000;
+      justify-content: center;
+      align-items: center;
     }
 
     .processing-overlay.visible {
@@ -351,16 +351,33 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const flattenBtn = document.getElementById('flattenBtn');
+      const processingOverlay = document.getElementById('processingOverlay');
       
       // Listen for selection changes from the plugin
-      window.onmessage = (event) => {
+      window.onmessage = async (event) => {
         const msg = event.data.pluginMessage;
-        if (msg && msg.type === 'selectionchange') {
+        if (msg.type === 'selectionchange') {
           flattenBtn.disabled = !msg.hasValidSelection;
-        } else if (msg && msg.type === 'complete') {
+        } else if (msg.type === 'export-svg') {
+          // Create blob from SVG data
+          const blob = new Blob([msg.svgData], { type: 'image/svg+xml' });
+          
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = msg.fileName;
+          
+          // Trigger download
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up
+          URL.revokeObjectURL(url);
+        } else if (msg.type === 'complete') {
           // Hide processing overlay
-          const processingOverlay = document.getElementById('processingOverlay');
-          processingOverlay.classList.remove('visible');
+          processingOverlay.style.display = 'none';
         }
       };
 
@@ -373,18 +390,15 @@
 
       document.getElementById('flattenBtn').onclick = () => {
         const retainOriginal = document.getElementById('retain').checked;
-        const quality = parseFloat(document.getElementById('quality').value);
         const format = document.getElementById('format').value;
         
         // Show processing overlay
-        const processingOverlay = document.getElementById('processingOverlay');
-        processingOverlay.classList.add('visible');
+        processingOverlay.style.display = 'flex';
         
         parent.postMessage({ 
           pluginMessage: { 
             type: 'flatten', 
             retainOriginal,
-            quality,
             format
           }
         }, '*');
@@ -398,10 +412,6 @@
         const isSVG = formatSelect.value === 'SVG';
         qualitySelect.disabled = isSVG;
         qualityGroup.classList.toggle('disabled', isSVG);
-        
-        if (isSVG) {
-          qualitySelect.value = '2'; // Reset to 2x when SVG is selected
-        }
       }
 
       formatSelect.addEventListener('change', updateQualityState);
