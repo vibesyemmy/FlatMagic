@@ -5,7 +5,10 @@
   "main": "code.js",
   "scripts": {
     "build": "cp code.js dist/code.js && cp ui.html dist/ui.html",
-    "watch": "nodemon --watch code.js --watch ui.html --exec 'npm run build'"
+    "watch": "nodemon --watch code.js --watch ui.html --exec 'npm run build'",
+    "release:major": "node scripts/release.js major",
+    "release:minor": "node scripts/release.js minor",
+    "release:patch": "node scripts/release.js patch"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.82.0",
