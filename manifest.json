@@ -8,6 +8,5 @@
   "documentAccess": "dynamic-page",
   "networkAccess": {
     "allowedDomains": ["none"]
-  },
-  "icon": "icon.png"
+  }
 }
