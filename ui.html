@@ -283,7 +283,7 @@
   </style>
 </head>
 <body>
-  <div class="processing-overlay" id="processingOverlay">
+  <div class="processing-overlay" id="processing-overlay">
     <div class="processing-content">
       <div class="spinner"></div>
       <div>Processing...</div>
@@ -319,20 +319,24 @@
         <div class="control-group">
           <label for="format">Format</label>
           <div class="select-wrapper">
-            <select id="format">
-              <option value="PNG" selected>PNG</option>
-              <option value="SVG">Vector</option>
+            <select id="format-select">
+              <option value="png" selected>PNG</option>
+              <option value="vector">Vector</option>
             </select>
           </div>
         </div>
 
         <div class="control-group">
-          <label for="quality">Quality</label>
+          <label for="quality-select">Quality</label>
           <div class="select-wrapper">
-            <select id="quality">
-              <option value="2" selected>Default</option>
-              <option value="3">High</option>
-              <option value="4">Maximum</option>
+            <select id="quality-select">
+              <!-- PNG Options -->
+              <option value="default" data-format="png" selected>Default</option>
+              <option value="high" data-format="png">High</option>
+              <option value="maximum" data-format="png">Maximum</option>
+              <!-- Vector Options -->
+              <option value="flattened" data-format="vector">Flattened</option>
+              <option value="preserved" data-format="vector">Preserved</option>
             </select>
           </div>
         </div>
@@ -351,7 +355,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const flattenBtn = document.getElementById('flattenBtn');
-      const processingOverlay = document.getElementById('processingOverlay');
+      const processingOverlay = document.getElementById('processing-overlay');
       
       // Listen for selection changes from the plugin
       window.onmessage = async (event) => {
@@ -388,9 +392,52 @@
         toggle.querySelector('svg').style.transform = section.classList.contains('visible') ? 'rotate(90deg)' : '';
       };
 
+      // Update quality options based on selected format
+      function updateQualityOptions() {
+        const formatSelect = document.getElementById('format-select');
+        const qualitySelect = document.getElementById('quality-select');
+        const selectedFormat = formatSelect.value.toLowerCase();
+        
+        // Store current selection if it exists for the format
+        const currentQuality = qualitySelect.value;
+        
+        // Hide all options first
+        Array.from(qualitySelect.options).forEach(option => {
+          const optionFormat = option.getAttribute('data-format');
+          if (optionFormat === selectedFormat) {
+            option.style.display = '';
+          } else {
+            option.style.display = 'none';
+          }
+        });
+        
+        // Select first visible option if current selection is hidden
+        const visibleOptions = Array.from(qualitySelect.options).filter(option => 
+          option.style.display !== 'none'
+        );
+        
+        if (visibleOptions.length > 0) {
+          // Try to maintain selection if it's valid for this format
+          const currentIsValid = visibleOptions.some(opt => opt.value === currentQuality);
+          if (!currentIsValid) {
+            qualitySelect.value = visibleOptions[0].value;
+          }
+        }
+      }
+
+      // Add event listener for format change
+      document.getElementById('format-select').addEventListener('change', updateQualityOptions);
+      
+      // Initialize quality options on load
+      document.addEventListener('DOMContentLoaded', () => {
+        updateQualityOptions();
+      });
+
+      // Handle flatten button click
       document.getElementById('flattenBtn').onclick = () => {
         const retainOriginal = document.getElementById('retain').checked;
-        const format = document.getElementById('format').value;
+        const format = document.getElementById('format-select').value;
+        const quality = document.getElementById('quality-select').value;
         
         // Show processing overlay
         processingOverlay.style.display = 'flex';
@@ -399,24 +446,22 @@
           pluginMessage: { 
             type: 'flatten', 
             retainOriginal,
-            format
+            format,
+            quality
           }
         }, '*');
       };
-
-      const formatSelect = document.getElementById('format');
-      const qualityGroup = document.querySelector('.control-group:nth-child(2)');
-      const qualitySelect = document.getElementById('quality');
-
-      function updateQualityState() {
-        const isSVG = formatSelect.value === 'SVG';
-        qualitySelect.disabled = isSVG;
-        qualityGroup.classList.toggle('disabled', isSVG);
-      }
-
-      formatSelect.addEventListener('change', updateQualityState);
-      updateQualityState(); // Initial state check
     });
+  </script>
+  <script>
+    onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      
+      if (msg.type === 'complete') {
+        // Hide processing overlay
+        document.getElementById('processing-overlay').style.display = 'none';
+      }
+    };
   </script>
 </body>
 </html>

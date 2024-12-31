@@ -31,13 +31,80 @@ function createBoundsPath(bounds) {
   };
 }
 
+// Helper function to create a clipping mask
+async function createClippingMask(node) {
+  // Create a rectangle for clipping
+  const clipRect = figma.createRectangle();
+  clipRect.resize(node.width, node.height);
+  clipRect.x = node.x;
+  clipRect.y = node.y;
+  
+  // Make the rectangle white (or any color, it doesn't matter as it's a mask)
+  clipRect.fills = [{
+    type: 'SOLID',
+    color: { r: 1, g: 1, b: 1 }
+  }];
+  
+  return clipRect;
+}
+
+// Helper function to process strokes
+async function processStrokes(node) {
+  // If node has strokes, outline them
+  if (node.strokes && node.strokes.length > 0) {
+    try {
+      // Create a clone to preserve the original node's properties
+      const clone = node.clone();
+      
+      // Outline the strokes
+      const outlinedStroke = await figma.flatten([clone]);
+      
+      // Position the outlined stroke
+      outlinedStroke.x = node.x;
+      outlinedStroke.y = node.y;
+      
+      // Add to the same parent as original node
+      if (node.parent) {
+        node.parent.appendChild(outlinedStroke);
+      }
+      
+      // Group the original node and outlined stroke
+      const group = figma.group([node, outlinedStroke], node.parent);
+      return group;
+    } catch (error) {
+      console.error('Failed to process strokes:', error);
+      return node;
+    }
+  }
+  return node;
+}
+
 async function convertToSvg(node, retainOriginal) {
   try {
     console.log('Starting vector conversion for:', node.type);
     
+    // Check if the node is a frame with clipsContent enabled
+    const shouldClip = node.type === 'FRAME' && node.clipsContent;
+    let processedNode = node;
+    let clipMask = null;
+    
+    // If clipping is needed, create a mask
+    if (shouldClip) {
+      console.log('Frame has clipsContent enabled, creating mask...');
+      clipMask = await createClippingMask(node);
+      // Group the node with its mask
+      const group = figma.group([node.clone(), clipMask], node.parent);
+      // Set the mask
+      clipMask.isMask = true;
+      processedNode = group;
+    }
+    
+    // Process strokes
+    processedNode = await processStrokes(processedNode);
+    
     // Step 1: Export the node as SVG with adjusted settings
     console.log('Exporting node as SVG...');
-    const svgBytes = await node.exportAsync({
+    const svgBytes = await processedNode.exportAsync({
       format: 'SVG',
       svgOutlineText: true,  // Convert text to outlines
       svgIdAttribute: false  // Avoid using IDs
@@ -69,9 +136,14 @@ async function convertToSvg(node, retainOriginal) {
       node.parent.appendChild(importedNode);
     }
     
-    // Step 4: Flatten the imported node
+    // Step 4: Flatten the imported node while preserving appearance
     console.log('Flattening imported node...');
     const flattenedNode = figma.flatten([importedNode]);
+    
+    // Clean up temporary nodes if we created a clip mask
+    if (shouldClip && processedNode && processedNode.parent) {
+      processedNode.remove();
+    }
     
     // Remove original if not retaining
     if (!retainOriginal && node.parent) {
@@ -90,14 +162,85 @@ async function convertToSvg(node, retainOriginal) {
   }
 }
 
-async function flattenToPNG(node, retainOriginal) {
+async function convertToSvgPreserved(node, retainOriginal) {
+  try {
+    console.log('Starting preserved vector conversion for:', node.type);
+    
+    // Check if the node is a frame with clipsContent enabled
+    const shouldClip = node.type === 'FRAME' && node.clipsContent;
+    let processedNode = node;
+    let clipMask = null;
+    
+    // If clipping is needed, create a mask
+    if (shouldClip) {
+      console.log('Frame has clipsContent enabled, creating mask...');
+      clipMask = await createClippingMask(node);
+      // Group the node with its mask
+      const group = figma.group([node.clone(), clipMask], node.parent);
+      // Set the mask
+      clipMask.isMask = true;
+      processedNode = group;
+    }
+    
+    // Export as SVG
+    const svgBytes = await processedNode.exportAsync({
+      format: 'SVG',
+      svgOutlineText: true,
+      svgIdAttribute: false
+    });
+    
+    // Convert to string
+    const svgString = String.fromCharCode.apply(null, svgBytes);
+    
+    // Create new node from SVG
+    const importedNode = await figma.createNodeFromSvg(svgString);
+    
+    if (!importedNode) {
+      throw new Error('Failed to create node from SVG');
+    }
+    
+    // Position the new node
+    importedNode.x = retainOriginal ? node.x + node.width + 100 : node.x;
+    importedNode.y = node.y;
+    
+    // Add to parent
+    if (node.parent) {
+      node.parent.appendChild(importedNode);
+    }
+    
+    // Clean up temporary nodes if we created a clip mask
+    if (shouldClip && processedNode && processedNode.parent) {
+      processedNode.remove();
+    }
+    
+    // Remove original if not retaining
+    if (!retainOriginal && node.parent) {
+      node.remove();
+    }
+    
+    figma.notify('Successfully converted to vector');
+    return importedNode;
+    
+  } catch (error) {
+    console.error('Vector conversion failed:', error);
+    console.error('Node type:', node.type);
+    console.error('Node size:', node.width, 'x', node.height);
+    figma.notify('Vector conversion failed: ' + error.message);
+    throw error;
+  }
+}
+
+async function flattenToPNG(node, retainOriginal, scale) {
   try {
     console.log('Starting PNG flattening for:', node.type);
     
+    // Process strokes before PNG export
+    const processedNode = await processStrokes(node);
+    
     // Export as PNG
-    const pngData = await node.exportAsync({
+    const pngData = await processedNode.exportAsync({
       format: 'PNG',
-      constraint: { type: 'SCALE', value: 2 }
+      constraint: { type: 'SCALE', value: scale }
     });
 
     // Create rectangle for PNG
@@ -105,13 +248,13 @@ async function flattenToPNG(node, retainOriginal) {
     
     try {
       // Set size and position
-      rect.resize(node.width, node.height);
+      rect.resize(processedNode.width, processedNode.height);
       if (retainOriginal) {
-        rect.x = node.x + node.width + 100;
-        rect.y = node.y;
+        rect.x = processedNode.x + processedNode.width + 100;
+        rect.y = processedNode.y;
       } else {
-        rect.x = node.x;
-        rect.y = node.y;
+        rect.x = processedNode.x;
+        rect.y = processedNode.y;
       }
 
       // Create image fill
@@ -123,25 +266,25 @@ async function flattenToPNG(node, retainOriginal) {
       }];
 
       // Copy properties safely
-      rect.name = (node.name || "Layer") + " (Flattened PNG)";
-      if (typeof node.opacity === 'number') {
-        rect.opacity = node.opacity;
+      rect.name = (processedNode.name || "Layer") + " (Flattened PNG)";
+      if (typeof processedNode.opacity === 'number') {
+        rect.opacity = processedNode.opacity;
       }
-      if (node.effects && Array.isArray(node.effects)) {
-        rect.effects = node.effects;
+      if (processedNode.effects && Array.isArray(processedNode.effects)) {
+        rect.effects = processedNode.effects;
       }
-      if (node.blendMode) {
-        rect.blendMode = node.blendMode;
+      if (processedNode.blendMode) {
+        rect.blendMode = processedNode.blendMode;
       }
 
       // Add to parent
-      if (node.parent) {
-        node.parent.appendChild(rect);
+      if (processedNode.parent) {
+        processedNode.parent.appendChild(rect);
       }
 
       // Remove original if not retaining
-      if (!retainOriginal && node.parent) {
-        node.remove();
+      if (!retainOriginal && processedNode.parent) {
+        processedNode.remove();
       }
 
       figma.notify("Successfully flattened to PNG");
@@ -168,32 +311,37 @@ figma.on('selectionchange', () => {
 // Message handler
 figma.ui.onmessage = async msg => {
   if (msg.type === 'flatten') {
-    const selection = figma.currentPage.selection;
+    const nodes = figma.currentPage.selection;
     
-    if (selection.length !== 1) {
-      figma.notify('Please select a single frame or group');
-      figma.ui.postMessage({ type: 'complete' });
+    if (nodes.length === 0) {
+      figma.notify('Please select a layer to flatten');
+      figma.ui.postMessage({ type: 'complete' }); // Send completion message
       return;
     }
 
-    const node = selection[0];
-    const retainOriginal = msg.retainOriginal;
-    
     try {
-      if (msg.format === 'PNG') {
-        await flattenToPNG(node, retainOriginal);
-      } else {
-        await convertToSvg(node, retainOriginal);
+      for (const node of nodes) {
+        if (msg.format === 'vector') {
+          if (msg.quality === 'preserved') {
+            // Preserved mode: Convert to SVG without flattening
+            await convertToSvgPreserved(node, msg.retainOriginal);
+          } else {
+            // Flattened mode: Use existing flatten logic
+            await convertToSvg(node, msg.retainOriginal);
+          }
+        } else {
+          // PNG mode with quality settings
+          const scale = msg.quality === 'default' ? 2 : 
+                       msg.quality === 'high' ? 3 : 4;
+          await flattenToPNG(node, msg.retainOriginal, scale);
+        }
       }
-      // Send completion message to hide processing modal
-      figma.ui.postMessage({ type: 'complete' });
+      figma.notify('Process completed successfully');
+      figma.ui.postMessage({ type: 'complete' }); // Send completion message
     } catch (error) {
       console.error('Process failed:', error);
-      console.error('Node type:', node.type);
-      console.error('Node size:', node.width, 'x', node.height);
-      figma.notify('Process failed. Check console for details.');
-      // Send completion message even if there's an error
-      figma.ui.postMessage({ type: 'complete' });
+      figma.notify('Process failed: ' + error.message);
+      figma.ui.postMessage({ type: 'complete' }); // Send completion message even on error
     }
   }
 };
