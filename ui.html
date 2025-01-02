@@ -428,10 +428,8 @@
       // Add event listener for format change
       document.getElementById('format-select').addEventListener('change', updateQualityOptions);
       
-      // Initialize quality options on load
-      document.addEventListener('DOMContentLoaded', () => {
-        updateQualityOptions();
-      });
+      // Initialize quality options immediately
+      updateQualityOptions();
 
       // Handle flatten button click
       document.getElementById('flattenBtn').onclick = () => {
